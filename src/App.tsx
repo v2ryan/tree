@@ -429,8 +429,9 @@ const GestureController = ({ onGesture, onMove, onStatus, debugMode }: any) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    let gestureRecognizer: GestureRecognizer;
+    let gestureRecognizer: GestureRecognizer | null = null;
     let requestRef: number;
+    let isActive = true;
 
     const setup = async () => {
       onStatus("DOWNLOADING AI...");
@@ -439,25 +440,26 @@ const GestureController = ({ onGesture, onMove, onStatus, debugMode }: any) => {
         gestureRecognizer = await GestureRecognizer.createFromOptions(vision, {
           baseOptions: {
             modelAssetPath: "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task",
-            delegate: "GPU"
+            delegate: "CPU"  // Changed from GPU to CPU for better compatibility
           },
           runningMode: "VIDEO",
           numHands: 1
         });
         onStatus("REQUESTING CAMERA...");
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          if (videoRef.current) {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 240 } } });
+          if (videoRef.current && isActive) {
             videoRef.current.srcObject = stream;
-            videoRef.current.play();
+            await videoRef.current.play();
             onStatus("AI READY: SHOW HAND");
             predictWebcam();
           }
         } else {
-            onStatus("ERROR: CAMERA PERMISSION DENIED");
+            onStatus("CAMERA NOT AVAILABLE - USE BUTTONS");
         }
       } catch (err: any) {
-        onStatus(`ERROR: ${err.message || 'MODEL FAILED'}`);
+        console.error("Gesture setup error:", err);
+        onStatus("GESTURE DISABLED - USE BUTTONS");
       }
     };
 
@@ -492,7 +494,10 @@ const GestureController = ({ onGesture, onMove, onStatus, debugMode }: any) => {
       }
     };
     setup();
-    return () => cancelAnimationFrame(requestRef);
+    return () => { 
+      isActive = false;
+      cancelAnimationFrame(requestRef);
+    };
   }, [onGesture, onMove, onStatus, debugMode]);
 
   return (
