@@ -42,10 +42,11 @@ const CONFIG = {
     candyColors: ['#FF0000', '#FFFFFF']
   },
   counts: {
-    foliage: 15000,
-    ornaments: 300,   // 拍立得照片数量
-    elements: 200,    // 圣诞元素数量
-    lights: 400       // 彩灯数量
+    // 检测移动设备并减少粒子数量
+    foliage: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 3000 : 15000,
+    ornaments: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 50 : 300,
+    elements: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 30 : 200,
+    lights: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 80 : 400
   },
   tree: { height: 22, radius: 9 }, // 树体尺寸
   photos: {
@@ -411,13 +412,16 @@ const Experience = ({ sceneState, rotationSpeed }: { sceneState: 'CHAOS' | 'FORM
            <FairyLights state={sceneState} />
            <TopStar state={sceneState} />
         </Suspense>
-        <Sparkles count={600} scale={50} size={8} speed={0.4} opacity={0.4} color={CONFIG.colors.silver} />
+        <Sparkles count={/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 100 : 600} scale={50} size={8} speed={0.4} opacity={0.4} color={CONFIG.colors.silver} />
       </group>
 
-      <EffectComposer>
-        <Bloom luminanceThreshold={0.8} luminanceSmoothing={0.1} intensity={1.5} radius={0.5} mipmapBlur />
-        <Vignette eskil={false} offset={0.1} darkness={1.2} />
-      </EffectComposer>
+      {/* 移动设备禁用后期效果 */}
+      {!/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && (
+        <EffectComposer>
+          <Bloom luminanceThreshold={0.8} luminanceSmoothing={0.1} intensity={1.5} radius={0.5} mipmapBlur />
+          <Vignette eskil={false} offset={0.1} darkness={1.2} />
+        </EffectComposer>
+      )}
     </>
   );
 };
@@ -509,6 +513,8 @@ const GestureController = ({ onGesture, onMove, onStatus, debugMode }: any) => {
 };
 
 // --- App Entry ---
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
 export default function GrandTreeApp() {
   const [sceneState, setSceneState] = useState<'CHAOS' | 'FORMED'>('CHAOS');
   const [rotationSpeed, setRotationSpeed] = useState(0);
@@ -518,11 +524,19 @@ export default function GrandTreeApp() {
   return (
     <div style={{ width: '100vw', height: '100vh', backgroundColor: '#000', position: 'relative', overflow: 'hidden' }}>
       <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 1 }}>
-        <Canvas dpr={[1, 2]} gl={{ toneMapping: THREE.ReinhardToneMapping }} shadows>
+        <Canvas 
+          dpr={isMobile ? 1 : [1, 2]} 
+          gl={{ 
+            toneMapping: THREE.ReinhardToneMapping,
+            powerPreference: isMobile ? 'low-power' : 'high-performance',
+            antialias: !isMobile
+          }} 
+          shadows={!isMobile}
+        >
             <Experience sceneState={sceneState} rotationSpeed={rotationSpeed} />
         </Canvas>
       </div>
-      <GestureController onGesture={setSceneState} onMove={setRotationSpeed} onStatus={setAiStatus} debugMode={debugMode} />
+      {!isMobile && <GestureController onGesture={setSceneState} onMove={setRotationSpeed} onStatus={setAiStatus} debugMode={debugMode} />}
 
       {/* UI - Stats */}
       <div style={{ position: 'absolute', bottom: '30px', left: '40px', color: '#888', zIndex: 10, fontFamily: 'sans-serif', userSelect: 'none' }}>
