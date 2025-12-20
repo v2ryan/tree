@@ -1,13 +1,277 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>christmas-tree</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五力自我評估問卷</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .force-card { transition: all 0.3s ease; }
+        input[type="radio"]:checked + label {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
+
+    <div id="app" class="max-w-3xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-blue-800 mb-2">五力自我評估問卷</h1>
+            <p class="text-slate-600">根據孔老師「贏在扭轉力」一書設計</p>
+            <div id="progress-bar-container" class="mt-6 h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div id="progress-bar" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
+            </div>
+        </header>
+
+        <!-- Survey Container -->
+        <div id="survey-content" class="bg-white rounded-2xl shadow-xl p-6 md:p-10 mb-8">
+            <!-- Dynamic Content Injected Here -->
+        </div>
+
+        <!-- Navigation -->
+        <div id="nav-buttons" class="flex justify-between items-center">
+            <button id="prev-btn" class="px-6 py-2 rounded-lg font-medium text-slate-500 hover:bg-slate-200 transition hidden">上一步</button>
+            <span id="page-indicator" class="text-slate-400 font-medium"></span>
+            <button id="next-btn" class="px-8 py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-lg transition">下一步</button>
+        </div>
+    </div>
+
+    <script>
+        const surveyData = [
+            {
+                id: 'ethics',
+                title: '一、德力 (Ethics)',
+                questions: [
+                    "1. 我能夠堅持自己的道德原則", "2. 我在工作中始終如一地遵循誠信", "3. 我會主動承擔自己的錯誤", "4. 我尊重他人的隱私和權益",
+                    "5. 我會為自己的行為負責", "6. 我在決策時考慮社會責任", "7. 我能夠抵抗不道德的誘惑", "8. 我相信誠實是長期成功的基石",
+                    "9. 我會在團隊中提倡道德行為", "10. 我能夠面對困難而不妥協於道德", "11. 我經常反思自己的道德選擇", "12. 我願意為他人提供幫助,而不僅僅考慮自己的利益",
+                    "13. 我能夠在壓力下保持誠信", "14. 我相信誠信會帶來良好的商業信用", "15. 我能夠清楚地表達自己的價值觀", "16. 我在面對困難時,會選擇正確的道路",
+                    "17. 我會在工作中倡導透明度", "18. 我能夠平衡個人利益與他人利益", "19. 我認為誠信是職場成功的關鍵", "20. 我會主動尋求改善道德標準的方法"
+                ]
+            },
+            {
+                id: 'edge',
+                title: '二、魄力 (Edge)',
+                questions: [
+                    "1. 我在做決策時能夠考慮風險", "2. 我不怕面對挑戰和困難", "3. 我有能力在壓力下保持冷靜", "4. 我能夠快速適應變化的環境",
+                    "5. 我願意接受新任務,甚至在不熟悉的領域中", "6. 我對自己的決策有信心", "7. 我能夠勇敢地表達自己的意見", "8. 我在團隊中能夠發揮領導作用",
+                    "9. 我能夠積極面對失敗,並從中學習", "10. 我在面對困難時能夠保持積極態度", "11. 我會主動尋找解決問題的方法", "12. 我能夠在不確定的情況下做出決策",
+                    "13. 我對自己的能力有清晰的認識", "14. 我能夠激勵自己超越自身的限制", "15. 我在工作中能夠保持高效能", "16. 我願意承擔風險以達成目標",
+                    "17. 我能夠在逆境中找到機會", "18. 我相信自己的直覺並勇敢行動", "19. 我能夠在團隊中推動變革", "20. 我能夠有效地管理時間和資源"
+                ]
+            },
+            {
+                id: 'envision',
+                title: '三、眼力 (Envision)',
+                questions: [
+                    "1. 我能夠清晰地設定個人和職業目標", "2. 我經常反思自己的長期願景", "3. 我能夠看到未來的潛在機會", "4. 我在做決策時會考慮長期影響",
+                    "5. 我能夠根據市場趨勢調整計劃", "6. 我經常尋求新的學習機會", "7. 我能夠有效地預測行業變化", "8. 我會在工作中尋求創新",
+                    "9. 我能夠制定出實際可行的計劃", "10. 我能夠激勵他人朝著共同的願景前進", "11. 我對未來的計劃有清晰的藍圖", "12. 我能夠有效地分辨重要的資訊",
+                    "13. 我能夠從過去的經驗中學習並改進未來的行動", "14. 我會積極參與團隊的長期規劃", "15. 我能夠在工作中體現創造力", "16. 我相信思考的深度能影響結果",
+                    "17. 我能夠快速識別問題的根源", "18. 我會不斷更新自己的專業知識", "19. 我能夠保持開放的心態,迎接新觀點", "20. 我能夠清楚地表達我的願景"
+                ]
+            },
+            {
+                id: 'energize',
+                title: '四、魅力 (Energize)',
+                questions: [
+                    "1. 我能夠激勵他入朝著共同的目標努力", "2. 我在團隊中經常充當鼓舞者的角色", "3. 我能夠輕鬆建立良好的人際關係", "4. 我會主動關心同事的需求和感受",
+                    "5. 我能夠在工作中創造積極的氛圍", "6. 我經常表達對他人努力的讚賞", "7. 我能夠有效地處理團隊中的衝突", "8. 我能夠激發團隊成員的潛能",
+                    "9. 我會主動分享自己的知識和經驗", "10. 我能夠在壓力下保持積極態度", "11. 我相信團隊合作的重要性", "12. 我經常尋求他人的意見和反饋",
+                    "13. 我能夠在團隊中建立信任", "14. 我會定期檢討團隊的表現", "15. 我能夠鼓勵團隊成員分享創新想法", "16. 我會主動尋找增強團隊士氣的方法",
+                    "17. 我能夠有效地傳達團隊的願景", "18. 我能夠帶動團隊迎接挑戰", "19. 我相信每個人都能為團隊貢獻力量", "20. 我能夠在工作中保持熱情和動力"
+                ]
+            },
+            {
+                id: 'execute',
+                title: '五、動力 (Execute)',
+                questions: [
+                    "1. 我能夠有效地制定和執行計劃", "2. 我會在工作中保持高效率", "3. 我能夠按時完成任務", "4. 我會定期檢查自己的進度",
+                    "5. 我能夠在壓力下保持工作效率", "6. 我能夠準確地識別優先事項", "7. 我會主動尋求反饋以改進工作", "8. 我能夠靈活應對變化的情況",
+                    "9. 我經常反思自己的工作表現", "10. 我能夠有效地管理時間和資源", "11. 我能夠在團隊中發揮主動性", "12. 我會持續尋求提高工作效率的方法",
+                    "13. 我能夠克服工作中的挑戰", "14. 我會在工作中保持專注", "15. 我能夠按部就班地完成複雜任務", "16. 我能夠簡化工作流程以提高效率",
+                    "17. 我會將目標細分為可行步驟", "18. 我能夠在遇到困難時保持韌性", "19. 我會主動參與團隊的執行工作", "20. 我能夠在工作中保持持續的動力"
+                ]
+            }
+        ];
+
+        let currentPage = 0;
+        const responses = {}; // Stores questionID -> score
+
+        const surveyContent = document.getElementById('survey-content');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const pageIndicator = document.getElementById('page-indicator');
+        const progressBar = document.getElementById('progress-bar');
+
+        function renderPage() {
+            if (currentPage < surveyData.length) {
+                const category = surveyData[currentPage];
+                let html = `
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-slate-800">${category.title}</h2>
+                        <p class="text-sm text-slate-500 mt-1">請針對以下 20 題評分 (1:非常不同意 - 6:非常同意)</p>
+                    </div>
+                    <div class="space-y-8">
+                `;
+
+                category.questions.forEach((q, idx) => {
+                    const qId = `${category.id}_${idx}`;
+                    const currentVal = responses[qId] || 0;
+                    
+                    html += `
+                        <div class="border-b border-slate-100 pb-6">
+                            <p class="text-lg text-slate-700 mb-4 font-medium">${q}</p>
+                            <div class="flex flex-wrap gap-2 md:gap-4 justify-between md:justify-start">
+                                ${[1, 2, 3, 4, 5, 6].map(val => `
+                                    <div class="flex-1 min-w-[45px] max-w-[60px]">
+                                        <input type="radio" name="${qId}" id="${qId}_${val}" value="${val}" class="hidden" 
+                                            ${currentVal == val ? 'checked' : ''} 
+                                            onchange="saveResponse('${qId}', ${val})">
+                                        <label for="${qId}_${val}" class="flex flex-col items-center justify-center w-full aspect-square border-2 border-slate-200 rounded-xl cursor-pointer hover:border-blue-400 text-slate-600 font-bold transition-all">
+                                            ${val}
+                                        </label>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+                surveyContent.innerHTML = html;
+
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                
+                // Update UI
+                prevBtn.classList.toggle('hidden', currentPage === 0);
+                nextBtn.textContent = '下一步';
+                pageIndicator.textContent = `${currentPage + 1} / ${surveyData.length}`;
+                progressBar.style.width = `${((currentPage) / surveyData.length) * 100}%`;
+            } else {
+                renderResult();
+            }
+        }
+
+        window.saveResponse = (id, val) => {
+            responses[id] = val;
+        };
+
+        function validateCurrentPage() {
+            const category = surveyData[currentPage];
+            for (let i = 0; i < category.questions.length; i++) {
+                if (!responses[`${category.id}_${i}`]) {
+                    showToast(`請完成第 ${i + 1} 題的評分`);
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function renderResult() {
+            const scores = surveyData.map(cat => {
+                let sum = 0;
+                for (let i = 0; i < cat.questions.length; i++) {
+                    sum += responses[`${cat.id}_${i}`] || 0;
+                }
+                return { label: cat.title.split('、')[1], value: sum };
+            });
+
+            const maxScore = 120;
+            let html = `
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-slate-800">評估結果總結</h2>
+                    <p class="text-slate-500 mt-2">您的五力分布如下（每項滿分 120）</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center mb-10">
+                    <div class="space-y-4">
+                        ${scores.map(s => `
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="font-bold text-slate-700">${s.label}</span>
+                                    <span class="text-blue-600 font-bold">${s.value} / 120</span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-4">
+                                    <div class="bg-blue-500 h-4 rounded-full transition-all duration-1000" style="width: ${(s.value / maxScore) * 100}%"></div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="flex justify-center">
+                        <svg viewBox="0 0 100 100" class="w-64 h-64 overflow-visible">
+                            <circle cx="50" cy="50" r="40" fill="none" stroke="#e2e8f0" stroke-width="1" />
+                            <circle cx="50" cy="50" r="20" fill="none" stroke="#e2e8f0" stroke-width="1" />
+                            ${scores.map((s, i) => {
+                                const angle = (i * 2 * Math.PI) / scores.length;
+                                const x2 = 50 + 40 * Math.cos(angle);
+                                const y2 = 50 + 40 * Math.sin(angle);
+                                return `<line x1="50" y1="50" x2="${x2}" y2="${y2}" stroke="#e2e8f0" stroke-width="1" />`;
+                            }).join('')}
+                            
+                            <polygon points="${scores.map((s, i) => {
+                                const angle = (i * 2 * Math.PI) / scores.length;
+                                const radius = (s.value / maxScore) * 40;
+                                const x = 50 + radius * Math.cos(angle);
+                                const y = 50 + radius * Math.sin(angle);
+                                return `${x},${y}`;
+                            }).join(' ')}" fill="rgba(59, 130, 246, 0.4)" stroke="#3b82f6" stroke-width="2" />
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-100 p-6 rounded-xl">
+                    <h3 class="font-bold text-blue-800 mb-2">💡 分析說明</h3>
+                    <p class="text-slate-700 text-sm leading-relaxed">
+                        您的五力圖呈現了您在「德力、魄力、眼力、魅力、動力」這五個維度的優劣勢。
+                        得分較高的部分是您的優點；得分較低的部分則是可以進一步修煉與成長的空間。
+                        建議參考孔老師的「贏在扭轉力」一書，針對弱項進行針對性提升。
+                    </p>
+                </div>
+
+                <div class="mt-8 text-center">
+                    <button onclick="window.location.reload()" class="px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition">重新測試</button>
+                </div>
+            `;
+
+            surveyContent.innerHTML = html;
+            prevBtn.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+            pageIndicator.textContent = "完成";
+            progressBar.style.width = "100%";
+        }
+
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = "fixed top-10 left-1/2 -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-full shadow-2xl z-50 animate-bounce";
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+
+        nextBtn.addEventListener('click', () => {
+            if (validateCurrentPage()) {
+                currentPage++;
+                renderPage();
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentPage > 0) {
+                currentPage--;
+                renderPage();
+            }
+        });
+
+        // Initialize
+        renderPage();
+
+    </script>
+</body>
 </html>
+
