@@ -12,6 +12,11 @@
             color: white;
             border-color: #3b82f6;
         }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen font-sans text-slate-900">
@@ -27,7 +32,7 @@
         </header>
 
         <!-- Survey Container -->
-        <div id="survey-content" class="bg-white rounded-2xl shadow-xl p-6 md:p-10 mb-8">
+        <div id="survey-content" class="bg-white rounded-2xl shadow-xl p-6 md:p-10 mb-8 min-h-[400px]">
             <!-- Dynamic Content Injected Here -->
         </div>
 
@@ -43,9 +48,11 @@
         const surveyData = [
             {
                 id: 'ethics',
+                name: '德力',
+                english: 'Ethics',
                 title: '一、德力 (Ethics)',
                 questions: [
-                    "1. 我能夠堅持自己的道德原則", "2. 我在工作中始終如一地遵循誠信", "3. 我會主動承擔自己的錯誤", "4. 我尊重他人的隱私和權益",
+                    "1. 我能夠堅持自己的道德原則", "2. 我在工作中始終如一地遵循誠信", "3. 我會主動承擔自己的錯誤", "4. 我尊重他人的隱私 and 權益",
                     "5. 我會為自己的行為負責", "6. 我在決策時考慮社會責任", "7. 我能夠抵抗不道德的誘惑", "8. 我相信誠實是長期成功的基石",
                     "9. 我會在團隊中提倡道德行為", "10. 我能夠面對困難而不妥協於道德", "11. 我經常反思自己的道德選擇", "12. 我願意為他人提供幫助,而不僅僅考慮自己的利益",
                     "13. 我能夠在壓力下保持誠信", "14. 我相信誠信會帶來良好的商業信用", "15. 我能夠清楚地表達自己的價值觀", "16. 我在面對困難時,會選擇正確的道路",
@@ -54,6 +61,8 @@
             },
             {
                 id: 'edge',
+                name: '魄力',
+                english: 'Edge',
                 title: '二、魄力 (Edge)',
                 questions: [
                     "1. 我在做決策時能夠考慮風險", "2. 我不怕面對挑戰和困難", "3. 我有能力在壓力下保持冷靜", "4. 我能夠快速適應變化的環境",
@@ -65,6 +74,8 @@
             },
             {
                 id: 'envision',
+                name: '眼力',
+                english: 'Envision',
                 title: '三、眼力 (Envision)',
                 questions: [
                     "1. 我能夠清晰地設定個人和職業目標", "2. 我經常反思自己的長期願景", "3. 我能夠看到未來的潛在機會", "4. 我在做決策時會考慮長期影響",
@@ -76,6 +87,8 @@
             },
             {
                 id: 'energize',
+                name: '魅力',
+                english: 'Energize',
                 title: '四、魅力 (Energize)',
                 questions: [
                     "1. 我能夠激勵他入朝著共同的目標努力", "2. 我在團隊中經常充當鼓舞者的角色", "3. 我能夠輕鬆建立良好的人際關係", "4. 我會主動關心同事的需求和感受",
@@ -87,6 +100,8 @@
             },
             {
                 id: 'execute',
+                name: '動力',
+                english: 'Execute',
                 title: '五、動力 (Execute)',
                 questions: [
                     "1. 我能夠有效地制定和執行計劃", "2. 我會在工作中保持高效率", "3. 我能夠按時完成任務", "4. 我會定期檢查自己的進度",
@@ -99,7 +114,7 @@
         ];
 
         let currentPage = 0;
-        const responses = {}; // Stores questionID -> score
+        const responses = {};
 
         const surveyContent = document.getElementById('survey-content');
         const prevBtn = document.getElementById('prev-btn');
@@ -111,11 +126,11 @@
             if (currentPage < surveyData.length) {
                 const category = surveyData[currentPage];
                 let html = `
-                    <div class="mb-6">
+                    <div class="mb-6 animate-fade-in">
                         <h2 class="text-2xl font-bold text-slate-800">${category.title}</h2>
                         <p class="text-sm text-slate-500 mt-1">請針對以下 20 題評分 (1:非常不同意 - 6:非常同意)</p>
                     </div>
-                    <div class="space-y-8">
+                    <div class="space-y-8 animate-fade-in">
                 `;
 
                 category.questions.forEach((q, idx) => {
@@ -144,12 +159,10 @@
                 html += `</div>`;
                 surveyContent.innerHTML = html;
 
-                // Scroll to top
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 
-                // Update UI
                 prevBtn.classList.toggle('hidden', currentPage === 0);
-                nextBtn.textContent = '下一步';
+                nextBtn.textContent = (currentPage === surveyData.length - 1) ? '查看結果' : '下一步';
                 pageIndicator.textContent = `${currentPage + 1} / ${surveyData.length}`;
                 progressBar.style.width = `${((currentPage) / surveyData.length) * 100}%`;
             } else {
@@ -178,80 +191,121 @@
                 for (let i = 0; i < cat.questions.length; i++) {
                     sum += responses[`${cat.id}_${i}`] || 0;
                 }
-                return { label: cat.title.split('、')[1], value: sum };
+                return { 
+                    label: cat.name, 
+                    english: cat.english,
+                    value: sum 
+                };
             });
 
             const maxScore = 120;
             let html = `
-                <div class="text-center mb-8">
-                    <h2 class="text-3xl font-bold text-slate-800">評估結果總結</h2>
-                    <p class="text-slate-500 mt-2">您的五力分布如下（每項滿分 120）</p>
+                <div class="text-center mb-8 animate-fade-in">
+                    <h2 class="text-3xl font-bold text-slate-800">五力評估總結報告</h2>
+                    <p class="text-slate-500 mt-2">您的各項實力對比分析</p>
                 </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center mb-10">
-                    <div class="space-y-4">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center mb-10 animate-fade-in">
+                    <!-- Text Scores -->
+                    <div class="space-y-5">
                         ${scores.map(s => `
-                            <div>
-                                <div class="flex justify-between mb-1">
-                                    <span class="font-bold text-slate-700">${s.label}</span>
-                                    <span class="text-blue-600 font-bold">${s.value} / 120</span>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <div class="flex justify-between items-end mb-2">
+                                    <div>
+                                        <span class="text-xl font-black text-slate-800">${s.label}</span>
+                                        <span class="text-xs font-bold text-slate-400 uppercase ml-1 tracking-wider">${s.english}</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-2xl font-black text-blue-600">${s.value}</span>
+                                        <span class="text-slate-400 font-bold text-sm">/ 120</span>
+                                    </div>
                                 </div>
-                                <div class="w-full bg-slate-100 rounded-full h-4">
-                                    <div class="bg-blue-500 h-4 rounded-full transition-all duration-1000" style="width: ${(s.value / maxScore) * 100}%"></div>
+                                <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                                    <div class="bg-blue-500 h-full rounded-full transition-all duration-1000" style="width: ${(s.value / maxScore) * 100}%"></div>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
                     
-                    <div class="flex justify-center">
-                        <svg viewBox="0 0 100 100" class="w-64 h-64 overflow-visible">
-                            <circle cx="50" cy="50" r="40" fill="none" stroke="#e2e8f0" stroke-width="1" />
-                            <circle cx="50" cy="50" r="20" fill="none" stroke="#e2e8f0" stroke-width="1" />
-                            ${scores.map((s, i) => {
-                                const angle = (i * 2 * Math.PI) / scores.length;
-                                const x2 = 50 + 40 * Math.cos(angle);
-                                const y2 = 50 + 40 * Math.sin(angle);
-                                return `<line x1="50" y1="50" x2="${x2}" y2="${y2}" stroke="#e2e8f0" stroke-width="1" />`;
-                            }).join('')}
-                            
-                            <polygon points="${scores.map((s, i) => {
-                                const angle = (i * 2 * Math.PI) / scores.length;
-                                const radius = (s.value / maxScore) * 40;
-                                const x = 50 + radius * Math.cos(angle);
-                                const y = 50 + radius * Math.sin(angle);
-                                return `${x},${y}`;
-                            }).join(' ')}" fill="rgba(59, 130, 246, 0.4)" stroke="#3b82f6" stroke-width="2" />
-                        </svg>
+                    <!-- Radar Visualization -->
+                    <div class="flex flex-col items-center justify-center">
+                        <div class="relative w-full aspect-square max-w-[320px]">
+                            <svg viewBox="0 0 100 100" class="w-full h-full overflow-visible">
+                                <!-- Background Circles/Web -->
+                                <circle cx="50" cy="50" r="40" fill="none" stroke="#cbd5e1" stroke-width="0.5" stroke-dasharray="2 2" />
+                                <circle cx="50" cy="50" r="30" fill="none" stroke="#cbd5e1" stroke-width="0.5" stroke-dasharray="2 2" />
+                                <circle cx="50" cy="50" r="20" fill="none" stroke="#cbd5e1" stroke-width="0.5" stroke-dasharray="2 2" />
+                                <circle cx="50" cy="50" r="10" fill="none" stroke="#cbd5e1" stroke-width="0.5" stroke-dasharray="2 2" />
+                                
+                                ${scores.map((s, i) => {
+                                    const angle = (i * 2 * Math.PI) / scores.length - Math.PI/2;
+                                    const x2 = 50 + 40 * Math.cos(angle);
+                                    const y2 = 50 + 40 * Math.sin(angle);
+                                    const lx = 50 + 52 * Math.cos(angle);
+                                    const ly = 50 + 52 * Math.sin(angle);
+                                    return `
+                                        <line x1="50" y1="50" x2="${x2}" y2="${y2}" stroke="#cbd5e1" stroke-width="1" />
+                                        <text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" class="text-[5px] font-bold fill-slate-500">${s.label}</text>
+                                    `;
+                                }).join('')}
+                                
+                                <!-- Data Shape -->
+                                <polygon points="${scores.map((s, i) => {
+                                    const angle = (i * 2 * Math.PI) / scores.length - Math.PI/2;
+                                    const radius = (s.value / maxScore) * 40;
+                                    const x = 50 + radius * Math.cos(angle);
+                                    const y = 50 + radius * Math.sin(angle);
+                                    return `${x},${y}`;
+                                }).join(' ')}" fill="rgba(59, 130, 246, 0.3)" stroke="#3b82f6" stroke-width="1.5" />
+                                
+                                <!-- Dots -->
+                                ${scores.map((s, i) => {
+                                    const angle = (i * 2 * Math.PI) / scores.length - Math.PI/2;
+                                    const radius = (s.value / maxScore) * 40;
+                                    const x = 50 + radius * Math.cos(angle);
+                                    const y = 50 + radius * Math.sin(angle);
+                                    return `<circle cx="${x}" cy="${y}" r="1.5" fill="#1e40af" />`;
+                                }).join('')}
+                            </svg>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-4 font-medium italic">五力模型分佈圖</p>
                     </div>
                 </div>
 
-                <div class="bg-blue-50 border border-blue-100 p-6 rounded-xl">
-                    <h3 class="font-bold text-blue-800 mb-2">💡 分析說明</h3>
-                    <p class="text-slate-700 text-sm leading-relaxed">
-                        您的五力圖呈現了您在「德力、魄力、眼力、魅力、動力」這五個維度的優劣勢。
-                        得分較高的部分是您的優點；得分較低的部分則是可以進一步修煉與成長的空間。
-                        建議參考孔老師的「贏在扭轉力」一書，針對弱項進行針對性提升。
-                    </p>
+                <div class="bg-blue-50 border border-blue-100 p-6 rounded-2xl animate-fade-in" style="animation-delay: 0.2s">
+                    <h3 class="font-bold text-blue-800 mb-3 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1a1 1 0 112 0v1a1 1 0 11-2 0zM13.536 14.95a1 1 0 011.414 0l.707.707a1 1 0 01-1.414 1.414l-.707-.707a1 1 0 010-1.414zM15.657 14.243a1 1 0 010 1.414l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 0z"></path></svg>
+                        五力解析說明
+                    </h3>
+                    <ul class="text-slate-700 text-sm space-y-3 leading-relaxed">
+                        <li><strong>德力 (Ethics)：</strong> 反映您的道德基準、誠信度及對社會責任的重視。</li>
+                        <li><strong>魄力 (Edge)：</strong> 反映您的果斷力、面對壓力時的冷靜度及挑戰自我的勇氣。</li>
+                        <li><strong>眼力 (Envision)：</strong> 反映您的遠見、目標設定能力及對趨勢的洞察力。</li>
+                        <li><strong>魅力 (Energize)：</strong> 反映您的人際影響力、團隊鼓舞能力及共感能力。</li>
+                        <li><strong>動力 (Execute)：</strong> 反映您的執行效率、時間管理及將願景落地的實踐力。</li>
+                    </ul>
                 </div>
 
-                <div class="mt-8 text-center">
-                    <button onclick="window.location.reload()" class="px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition">重新測試</button>
+                <div class="mt-10 text-center animate-fade-in" style="animation-delay: 0.4s">
+                    <button onclick="window.location.reload()" class="px-8 py-3 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-900 transition shadow-lg">重新開始評估</button>
+                    <p class="text-slate-400 text-xs mt-4">備註：有關更多扭轉五力，可參考孔老師的著作「贏在扭轉力」一書。</p>
                 </div>
             `;
 
             surveyContent.innerHTML = html;
             prevBtn.classList.add('hidden');
             nextBtn.classList.add('hidden');
-            pageIndicator.textContent = "完成";
+            pageIndicator.textContent = "已完成";
             progressBar.style.width = "100%";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function showToast(msg) {
             const toast = document.createElement('div');
-            toast.className = "fixed top-10 left-1/2 -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-full shadow-2xl z-50 animate-bounce";
+            toast.className = "fixed top-10 left-1/2 -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-full shadow-2xl z-50 animate-bounce font-bold";
             toast.textContent = msg;
             document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2000);
+            setTimeout(() => toast.remove(), 2500);
         }
 
         nextBtn.addEventListener('click', () => {
@@ -268,9 +322,7 @@
             }
         });
 
-        // Initialize
         renderPage();
-
     </script>
 </body>
 </html>
