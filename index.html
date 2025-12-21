@@ -17,7 +17,6 @@
             .bg-blue-50 { background-color: #f0f9ff !important; border: 1px solid #bae6fd !important; }
             .text-blue-900 { color: #1e3a8a !important; }
             .print-break-after { page-break-after: always; }
-            .print-p-0 { padding: 0 !important; }
             svg { max-width: 300px !important; margin: 0 auto !important; }
         }
 
@@ -36,14 +35,24 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* 使評分標頭在滾動時稍微保持可見度（可選） */
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f1f5f9;
+        }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen font-sans text-slate-900 print-p-0">
+<body class="bg-slate-100 min-h-screen font-sans text-slate-900">
 
     <div id="app" class="max-w-4xl mx-auto px-4 py-8 report-container">
         <!-- 頂部標題（列印時隱藏） -->
         <header class="mb-8 text-center no-print">
-            <h1 class="text-3xl font-bold text-blue-900 mb-2">五力自我評估問卷</h1>
+            <h1 class="text-3xl font-bold text-blue-900 mb-2 italic">五力自我評估問卷</h1>
             <p class="text-slate-600">根據孔毅老師「贏在扭轉力」體系設計</p>
             <div class="mt-6 h-2 bg-slate-200 rounded-full overflow-hidden max-w-md mx-auto">
                 <div id="progress-bar" class="h-full bg-blue-600 transition-all duration-500" style="width: 0%"></div>
@@ -128,9 +137,20 @@
                 let html = `
                     <div class="mb-6 animate-fade-in">
                         <h2 class="text-2xl font-black text-blue-900">${category.title}</h2>
-                        <p class="text-sm text-slate-500 mt-1 italic">請選擇評分：6 (非常同意) 至 1 (非常不同意)</p>
+                        <p class="text-sm text-slate-500 mt-1 italic">（評分標準：6 為非常同意，1 為非常不同意）</p>
                     </div>
-                    <div class="space-y-8 animate-fade-in">
+
+                    <!-- 每頁只出現一次評分標頭 -->
+                    <div class="sticky-header flex justify-between px-2 mb-4">
+                        <span class="text-xs font-black text-blue-700 uppercase tracking-tighter">6 非常同意</span>
+                        <div class="flex-1 flex justify-center gap-2 md:gap-4 invisible">
+                             <!-- 佔位用 -->
+                             ${[1,2,3,4,5,6].map(() => '<div class="w-full h-1"></div>').join('')}
+                        </div>
+                        <span class="text-xs font-black text-slate-400 uppercase tracking-tighter">1 非常不同意</span>
+                    </div>
+
+                    <div class="space-y-6 animate-fade-in">
                 `;
 
                 category.questions.forEach((q, idx) => {
@@ -138,12 +158,8 @@
                     const currentVal = responses[qId] || 0;
                     
                     html += `
-                        <div class="border-b border-slate-100 pb-8">
-                            <p class="text-lg text-slate-700 mb-6 font-medium leading-relaxed">${q}</p>
-                            <div class="flex justify-between px-1 mb-2">
-                                <span class="text-xs font-bold text-blue-600">6 非常同意</span>
-                                <span class="text-xs font-bold text-slate-400">1 非常不同意</span>
-                            </div>
+                        <div class="border-b border-slate-50 pb-6 hover:bg-slate-50/50 transition-colors px-2 rounded-lg">
+                            <p class="text-lg text-slate-700 mb-4 font-medium leading-relaxed">${q}</p>
                             <div class="flex flex-row-reverse gap-2 md:gap-4 justify-between">
                                 ${[1, 2, 3, 4, 5, 6].map(val => `
                                     <div class="flex-1">
@@ -213,7 +229,6 @@
 
             let html = `
                 <div class="animate-fade-in print-p-0">
-                    <!-- 標題與列印按鈕 -->
                     <div class="flex flex-col md:flex-row justify-between items-start mb-8 border-b-2 border-blue-900 pb-4">
                         <div>
                             <h2 class="text-3xl font-black text-blue-900 uppercase">五力診斷分析報告</h2>
@@ -227,7 +242,6 @@
                         </div>
                     </div>
 
-                    <!-- 得分概覽 -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
                         <div class="space-y-4">
                             ${scores.map(s => `
@@ -272,50 +286,41 @@
                         </div>
                     </div>
 
-                    <!-- 木桶原理總結 -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
                         <div class="p-6 border-l-8 border-red-600 bg-red-50 rounded-r-2xl">
                             <h4 class="font-black text-red-800 text-lg mb-2">最短的木板 (發展瓶頸)</h4>
                             <p class="text-slate-900 font-bold mb-1">${weakest.label}：${weakest.value}分</p>
-                            <p class="text-slate-600 text-sm leading-relaxed italic">根據「木桶原理」，此項為目前限制您發展的核心瓶頸，建議優先針對此力進行操練。</p>
+                            <p class="text-slate-600 text-sm leading-relaxed italic">優先針對此項進行操練，打破發展瓶頸。</p>
                         </div>
                         <div class="p-6 border-l-8 border-green-600 bg-green-50 rounded-r-2xl">
                             <h4 class="font-black text-green-800 text-lg mb-2">最強的優勢 (天賦所在)</h4>
                             <p class="text-slate-900 font-bold mb-1">${strongest.label}：${strongest.value}分</p>
-                            <p class="text-slate-600 text-sm leading-relaxed italic">這是您的核心競爭力，應利用「區分原則」繼續強化它，使其成為不可替代的個人品牌。</p>
+                            <p class="text-slate-600 text-sm leading-relaxed italic">強化不可替代性，打造個人品牌。</p>
                         </div>
                     </div>
 
                     <div class="print-break-after"></div>
 
-                    <!-- 詳細解析 -->
-                    <h3 class="text-2xl font-black text-blue-900 mb-8 border-b-4 border-blue-900 inline-block">五力逐項深度建議</h3>
+                    <h3 class="text-2xl font-black text-blue-900 mb-8 border-b-4 border-blue-900 inline-block">深度建議解析</h3>
                     <div class="space-y-10">
                         ${scores.map(s => `
                             <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200">
                                 <div class="flex flex-col md:flex-row justify-between md:items-center mb-6 gap-2">
-                                    <h4 class="text-2xl font-black text-blue-800">${s.label} (${s.english})</h4>
-                                    <div class="flex items-center">
-                                        <span class="px-4 py-1 bg-blue-700 text-white rounded-full text-xs font-black uppercase tracking-widest">${s.level.name}</span>
-                                    </div>
+                                    <h4 class="text-2xl font-black text-blue-800">${s.label}</h4>
+                                    <span class="px-4 py-1 bg-blue-700 text-white rounded-full text-xs font-black uppercase tracking-widest">${s.level.name}</span>
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">現狀診斷 / Diagnosis</p>
+                                    <div class="bg-white p-4 rounded-xl border border-slate-100">
+                                        <p class="text-[10px] font-black text-slate-400 uppercase mb-2">現狀診斷</p>
                                         <p class="text-slate-700 text-sm leading-relaxed">${s.advice.diag}</p>
                                     </div>
-                                    <div class="bg-blue-900/5 p-4 rounded-xl border border-blue-100 shadow-sm">
-                                        <p class="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-2">發展建議 / Recommendations</p>
+                                    <div class="bg-blue-900/5 p-4 rounded-xl border border-blue-100">
+                                        <p class="text-[10px] font-black text-blue-400 uppercase mb-2">發展建議</p>
                                         <p class="text-blue-900 text-sm leading-relaxed font-bold">${s.advice.sug}</p>
                                     </div>
                                 </div>
                             </div>
                         `).join('')}
-                    </div>
-
-                    <div class="mt-16 pt-8 border-t border-slate-200 text-center no-print">
-                        <p class="text-slate-400 text-xs italic">本報告由「扭轉五力評估系統」自動生成。更多詳情請參考《贏在扭轉力》一書。</p>
-                        <button onclick="window.location.reload()" class="mt-8 px-10 py-3 border-2 border-blue-900 text-blue-900 rounded-xl hover:bg-blue-900 hover:text-white transition font-black">重新進行評估</button>
                     </div>
                 </div>
             `;
@@ -323,17 +328,12 @@
             surveyContent.innerHTML = html;
             prevBtn.classList.add('hidden');
             nextBtn.classList.add('hidden');
-            pageIndicator.textContent = "診斷報告已生成";
+            pageIndicator.textContent = "報告生成完畢";
             progressBar.style.width = "100%";
         }
 
-        // 特別處理列印邏輯
         function handlePrint() {
-            // 在某些內嵌環境下，直接 call window.print() 可能無效
-            // 透過 setTimeout 讓 UI 先反應，再觸發列印視窗
-            setTimeout(() => {
-                window.print();
-            }, 100);
+            setTimeout(() => { window.print(); }, 100);
         }
 
         function showToast(msg) {
@@ -358,7 +358,6 @@
             }
         });
 
-        // 開始渲染
         renderPage();
     </script>
 </body>
