@@ -1,421 +1,1123 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+
+<html lang="zh-HK">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>五力自我評估深度診斷報告</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* 打印優化樣式 */
-        @media print {
-            @page {
-                size: A4;
-                margin: 1.5cm;
-            }
-            .no-print { display: none !important; }
-            body { 
-                background-color: white !important; 
-                color: black !important;
-                -webkit-print-color-adjust: exact; 
-                print-color-adjust: exact;
-            }
-            .print-container { 
-                width: 100% !important; 
-                max-width: none !important; 
-                margin: 0 !important; 
-                padding: 0 !important;
-                box-shadow: none !important;
-            }
-            /* 避免卡片在分頁處斷開 */
-            .print-card { 
-                break-inside: avoid; 
-                page-break-inside: avoid;
-                margin-bottom: 1rem;
-                border: 1px solid #e5e7eb !important;
-            }
-            .print-break-before { page-break-before: always; }
-            .print-header {
-                display: block !important;
-                border-bottom: 2px solid #1e3a8a;
-                margin-bottom: 2rem;
-                padding-bottom: 0.5rem;
-            }
-            .bg-blue-900 { background-color: #1e3a8a !important; color: white !important; }
-            .bg-slate-50 { background-color: #f8fafc !important; }
-            .bg-blue-50 { background-color: #eff6ff !important; }
-            .text-blue-700 { color: #1d4ed8 !important; }
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlashForge — NotebookLM CSV → 閃卡 & PDF</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+:root {
+  --ink: #1a1a2e;
+  --ink-50: rgba(26,26,46,0.5);
+  --ink-20: rgba(26,26,46,0.2);
+  --ink-08: rgba(26,26,46,0.08);
+  --ink-04: rgba(26,26,46,0.04);
+  --paper: #faf9f6;
+  --paper-warm: #f5f0e8;
+  --white: #ffffff;
+  --accent: #e85d26;
+  --accent-light: #fff0eb;
+  --accent-dark: #c44a1a;
+  --mint: #2a9d8f;
+  --mint-light: #e8f6f4;
+  --blue: #457b9d;
+  --blue-light: #eaf2f7;
+  --gold: #e9c46a;
+  --gold-light: #fdf8eb;
+  --radius: 12px;
+  --radius-lg: 20px;
+  --shadow-sm: 0 1px 3px rgba(26,26,46,0.06);
+  --shadow-md: 0 4px 16px rgba(26,26,46,0.08);
+  --shadow-lg: 0 8px 32px rgba(26,26,46,0.12);
+  --shadow-xl: 0 16px 48px rgba(26,26,46,0.16);
+  --font-body: 'DM Sans', 'Noto Sans TC', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
 
-        .print-header { display: none; }
-        
-        input[type="radio"]:checked + label {
-            background-color: #1d4ed8;
-            color: white;
-            border-color: #1d4ed8;
-            transform: scale(1.05);
-        }
-        
-        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+- { margin: 0; padding: 0; box-sizing: border-box; }
 
-        .sticky-header {
-            position: sticky;
-            top: 0;
-            background: white;
-            z-index: 10;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #f1f5f9;
-        }
-    </style>
+body {
+font-family: var(–font-body);
+background: var(–paper);
+color: var(–ink);
+line-height: 1.6;
+min-height: 100vh;
+-webkit-font-smoothing: antialiased;
+}
+
+/* ========== HEADER ========== */
+header {
+background: var(–ink);
+color: var(–paper);
+padding: 0;
+position: sticky;
+top: 0;
+z-index: 100;
+box-shadow: var(–shadow-lg);
+}
+
+.header-inner {
+max-width: 1200px;
+margin: 0 auto;
+padding: 16px 24px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 16px;
+}
+
+.logo {
+display: flex;
+align-items: center;
+gap: 12px;
+}
+
+.logo-icon {
+width: 40px;
+height: 40px;
+background: var(–accent);
+border-radius: 10px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 20px;
+transform: rotate(-3deg);
+flex-shrink: 0;
+}
+
+.logo h1 {
+font-size: 20px;
+font-weight: 700;
+letter-spacing: -0.5px;
+}
+
+.logo h1 span {
+color: var(–accent);
+}
+
+.header-tag {
+font-size: 11px;
+font-family: var(–font-mono);
+background: rgba(255,255,255,0.1);
+padding: 4px 10px;
+border-radius: 20px;
+color: rgba(255,255,255,0.6);
+}
+
+/* ========== MAIN ========== */
+main {
+max-width: 1200px;
+margin: 0 auto;
+padding: 32px 24px 80px;
+}
+
+/* ========== UPLOAD ZONE ========== */
+.upload-section {
+margin-bottom: 32px;
+}
+
+.upload-zone {
+border: 2px dashed var(–ink-20);
+border-radius: var(–radius-lg);
+padding: 48px 32px;
+text-align: center;
+cursor: pointer;
+transition: all 0.3s ease;
+background: var(–white);
+position: relative;
+overflow: hidden;
+}
+
+.upload-zone::before {
+content: ‘’;
+position: absolute;
+inset: 0;
+background: repeating-linear-gradient(
+-45deg,
+transparent,
+transparent 8px,
+var(–ink-04) 8px,
+var(–ink-04) 9px
+);
+opacity: 0;
+transition: opacity 0.3s;
+}
+
+.upload-zone:hover,
+.upload-zone.dragover {
+border-color: var(–accent);
+background: var(–accent-light);
+transform: scale(1.005);
+}
+
+.upload-zone:hover::before,
+.upload-zone.dragover::before {
+opacity: 1;
+}
+
+.upload-zone.has-file {
+border-style: solid;
+border-color: var(–mint);
+background: var(–mint-light);
+padding: 24px 32px;
+}
+
+.upload-icon {
+font-size: 48px;
+margin-bottom: 16px;
+display: block;
+position: relative;
+z-index: 1;
+}
+
+.upload-zone h2 {
+font-size: 18px;
+font-weight: 700;
+margin-bottom: 8px;
+position: relative;
+z-index: 1;
+}
+
+.upload-zone p {
+color: var(–ink-50);
+font-size: 14px;
+position: relative;
+z-index: 1;
+}
+
+.upload-zone input[type=“file”] {
+display: none;
+}
+
+.file-info {
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 12px;
+position: relative;
+z-index: 1;
+}
+
+.file-info .file-name {
+font-weight: 600;
+font-family: var(–font-mono);
+font-size: 14px;
+}
+
+.file-info .file-stats {
+color: var(–ink-50);
+font-size: 13px;
+}
+
+.btn-remove {
+background: none;
+border: 1px solid var(–ink-20);
+border-radius: 8px;
+padding: 4px 12px;
+font-size: 12px;
+cursor: pointer;
+color: var(–ink-50);
+transition: all 0.2s;
+}
+
+.btn-remove:hover {
+background: #fee;
+border-color: #e55;
+color: #c33;
+}
+
+/* ========== COLUMN MAPPING ========== */
+.mapping-section {
+background: var(–white);
+border-radius: var(–radius-lg);
+padding: 24px;
+margin-bottom: 32px;
+box-shadow: var(–shadow-sm);
+display: none;
+}
+
+.mapping-section.active { display: block; }
+
+.mapping-section h3 {
+font-size: 16px;
+font-weight: 700;
+margin-bottom: 16px;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.mapping-row {
+display: grid;
+grid-template-columns: 1fr 1fr 1fr;
+gap: 16px;
+margin-bottom: 16px;
+}
+
+@media (max-width: 640px) {
+.mapping-row { grid-template-columns: 1fr; }
+}
+
+.mapping-group label {
+display: block;
+font-size: 12px;
+font-weight: 600;
+text-transform: uppercase;
+letter-spacing: 0.5px;
+color: var(–ink-50);
+margin-bottom: 6px;
+}
+
+.mapping-group select {
+width: 100%;
+padding: 10px 14px;
+border: 1px solid var(–ink-20);
+border-radius: var(–radius);
+font-family: var(–font-body);
+font-size: 14px;
+background: var(–paper);
+cursor: pointer;
+transition: border-color 0.2s;
+appearance: auto;
+}
+
+.mapping-group select:focus {
+outline: none;
+border-color: var(–accent);
+}
+
+/* ========== TOOLBAR ========== */
+.toolbar {
+display: flex;
+align-items: center;
+justify-content: space-between;
+flex-wrap: wrap;
+gap: 12px;
+margin-bottom: 24px;
+display: none;
+}
+
+.toolbar.active { display: flex; }
+
+.toolbar-left {
+display: flex;
+align-items: center;
+gap: 8px;
+flex-wrap: wrap;
+}
+
+.toolbar-right {
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.btn {
+display: inline-flex;
+align-items: center;
+gap: 6px;
+padding: 10px 18px;
+border: none;
+border-radius: var(–radius);
+font-family: var(–font-body);
+font-size: 14px;
+font-weight: 600;
+cursor: pointer;
+transition: all 0.2s;
+white-space: nowrap;
+}
+
+.btn-primary {
+background: var(–accent);
+color: white;
+}
+
+.btn-primary:hover {
+background: var(–accent-dark);
+transform: translateY(-1px);
+box-shadow: var(–shadow-md);
+}
+
+.btn-secondary {
+background: var(–white);
+color: var(–ink);
+border: 1px solid var(–ink-20);
+}
+
+.btn-secondary:hover {
+background: var(–paper);
+border-color: var(–ink-50);
+}
+
+.btn-secondary.active {
+background: var(–ink);
+color: var(–paper);
+border-color: var(–ink);
+}
+
+.btn-mint {
+background: var(–mint);
+color: white;
+}
+
+.btn-mint:hover {
+background: #238b7f;
+transform: translateY(-1px);
+box-shadow: var(–shadow-md);
+}
+
+.layout-btns {
+display: flex;
+border: 1px solid var(–ink-20);
+border-radius: var(–radius);
+overflow: hidden;
+}
+
+.layout-btns .btn-layout {
+padding: 8px 14px;
+border: none;
+background: var(–white);
+cursor: pointer;
+font-size: 13px;
+font-weight: 600;
+font-family: var(–font-body);
+color: var(–ink-50);
+transition: all 0.2s;
+}
+
+.layout-btns .btn-layout + .btn-layout {
+border-left: 1px solid var(–ink-20);
+}
+
+.layout-btns .btn-layout.active {
+background: var(–ink);
+color: var(–paper);
+}
+
+.card-size-select {
+padding: 8px 12px;
+border: 1px solid var(–ink-20);
+border-radius: var(–radius);
+font-family: var(–font-body);
+font-size: 13px;
+background: var(–white);
+cursor: pointer;
+}
+
+/* ========== FLASHCARD GRID ========== */
+.cards-container {
+display: none;
+}
+
+.cards-container.active { display: block; }
+
+.cards-grid {
+display: grid;
+gap: 20px;
+}
+
+.cards-grid.layout-2 { grid-template-columns: repeat(2, 1fr); }
+.cards-grid.layout-3 { grid-template-columns: repeat(3, 1fr); }
+.cards-grid.layout-4 { grid-template-columns: repeat(4, 1fr); }
+.cards-grid.layout-list { grid-template-columns: 1fr; }
+
+@media (max-width: 900px) {
+.cards-grid.layout-3,
+.cards-grid.layout-4 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+.cards-grid.layout-2,
+.cards-grid.layout-3,
+.cards-grid.layout-4 { grid-template-columns: 1fr; }
+}
+
+/* ========== FLASHCARD ========== */
+.flashcard {
+background: var(–white);
+border-radius: var(–radius);
+box-shadow: var(–shadow-sm);
+overflow: hidden;
+transition: all 0.25s ease;
+border: 1px solid var(–ink-08);
+position: relative;
+}
+
+.flashcard:hover {
+box-shadow: var(–shadow-md);
+transform: translateY(-2px);
+}
+
+.flashcard-num {
+position: absolute;
+top: 10px;
+right: 12px;
+font-size: 11px;
+font-family: var(–font-mono);
+color: var(–ink-20);
+font-weight: 500;
+}
+
+.flashcard-front {
+padding: 20px 20px 16px;
+border-bottom: 2px dashed var(–ink-08);
+min-height: 80px;
+position: relative;
+}
+
+.flashcard-front::before {
+content: ‘Q’;
+position: absolute;
+top: 10px;
+left: 12px;
+font-size: 11px;
+font-weight: 700;
+color: var(–accent);
+font-family: var(–font-mono);
+background: var(–accent-light);
+width: 22px;
+height: 22px;
+display: flex;
+align-items: center;
+justify-content: center;
+border-radius: 6px;
+}
+
+.flashcard-front .content {
+padding-left: 28px;
+font-weight: 600;
+font-size: 14px;
+line-height: 1.6;
+}
+
+.flashcard-back {
+padding: 16px 20px 20px;
+background: var(–ink-04);
+min-height: 80px;
+position: relative;
+}
+
+.flashcard-back::before {
+content: ‘A’;
+position: absolute;
+top: 12px;
+left: 12px;
+font-size: 11px;
+font-weight: 700;
+color: var(–mint);
+font-family: var(–font-mono);
+background: var(–mint-light);
+width: 22px;
+height: 22px;
+display: flex;
+align-items: center;
+justify-content: center;
+border-radius: 6px;
+}
+
+.flashcard-back .content {
+padding-left: 28px;
+font-size: 13px;
+line-height: 1.7;
+color: var(–ink-50);
+}
+
+.flashcard-tag {
+margin-top: 10px;
+padding-left: 28px;
+}
+
+.flashcard-tag span {
+display: inline-block;
+font-size: 11px;
+font-family: var(–font-mono);
+background: var(–blue-light);
+color: var(–blue);
+padding: 2px 8px;
+border-radius: 4px;
+font-weight: 500;
+}
+
+/* ========== LIST VIEW ========== */
+.layout-list .flashcard {
+display: grid;
+grid-template-columns: 1fr 1fr;
+}
+
+.layout-list .flashcard-front {
+border-bottom: none;
+border-right: 2px dashed var(–ink-08);
+}
+
+@media (max-width: 600px) {
+.layout-list .flashcard {
+grid-template-columns: 1fr;
+}
+.layout-list .flashcard-front {
+border-right: none;
+border-bottom: 2px dashed var(–ink-08);
+}
+}
+
+/* ========== STATS BAR ========== */
+.stats-bar {
+display: flex;
+gap: 24px;
+margin-bottom: 24px;
+padding: 16px 20px;
+background: var(–white);
+border-radius: var(–radius);
+box-shadow: var(–shadow-sm);
+display: none;
+}
+
+.stats-bar.active { display: flex; }
+
+.stat-item {
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.stat-num {
+font-size: 24px;
+font-weight: 700;
+font-family: var(–font-mono);
+color: var(–accent);
+}
+
+.stat-label {
+font-size: 12px;
+color: var(–ink-50);
+font-weight: 500;
+}
+
+/* ========== EMPTY STATE ========== */
+.empty-state {
+text-align: center;
+padding: 80px 24px;
+color: var(–ink-50);
+}
+
+.empty-state .icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+.empty-state h3 { font-size: 18px; margin-bottom: 8px; color: var(–ink); }
+.empty-state p { font-size: 14px; max-width: 400px; margin: 0 auto; }
+
+/* ========== SAMPLE DATA ========== */
+.sample-section {
+margin-top: 24px;
+padding: 20px;
+background: var(–gold-light);
+border-radius: var(–radius);
+border: 1px solid var(–gold);
+}
+
+.sample-section h4 {
+font-size: 14px;
+margin-bottom: 8px;
+display: flex;
+align-items: center;
+gap: 6px;
+}
+
+.sample-section p {
+font-size: 13px;
+color: var(–ink-50);
+margin-bottom: 12px;
+}
+
+.sample-section pre {
+background: var(–white);
+padding: 12px 16px;
+border-radius: 8px;
+font-family: var(–font-mono);
+font-size: 12px;
+line-height: 1.8;
+overflow-x: auto;
+border: 1px solid var(–ink-08);
+margin-bottom: 12px;
+}
+
+/* ========== PRINT STYLES ========== */
+@media print {
+@page {
+size: A4;
+margin: 12mm;
+}
+
+body {
+background: white !important;
+-webkit-print-color-adjust: exact;
+print-color-adjust: exact;
+}
+
+header, .upload-section, .mapping-section,
+.toolbar, .stats-bar, .sample-section,
+.btn-remove, .no-print {
+display: none !important;
+}
+
+main {
+padding: 0 !important;
+max-width: 100% !important;
+}
+
+.cards-container { display: block !important; }
+
+.cards-grid {
+gap: 8px !important;
+}
+
+.cards-grid.layout-2 { grid-template-columns: repeat(2, 1fr) !important; }
+.cards-grid.layout-3 { grid-template-columns: repeat(3, 1fr) !important; }
+.cards-grid.layout-4 { grid-template-columns: repeat(4, 1fr) !important; }
+.cards-grid.layout-list { grid-template-columns: 1fr !important; }
+
+.flashcard {
+break-inside: avoid;
+page-break-inside: avoid;
+box-shadow: none !important;
+border: 1px solid #ccc !important;
+transform: none !important;
+}
+
+.flashcard:hover {
+box-shadow: none !important;
+transform: none !important;
+}
+
+.flashcard-front { min-height: auto; padding: 12px 14px 10px; }
+.flashcard-back { min-height: auto; padding: 10px 14px 12px; }
+.flashcard-front .content, .flashcard-back .content { font-size: 12px; }
+.flashcard-front::before, .flashcard-back::before { font-size: 9px; width: 18px; height: 18px; }
+.flashcard-num { font-size: 9px; }
+
+.print-header {
+display: block !important;
+text-align: center;
+padding: 8px 0 16px;
+border-bottom: 2px solid #333;
+margin-bottom: 16px;
+}
+
+.print-header h2 { font-size: 16px; }
+.print-header p { font-size: 11px; color: #666; }
+}
+
+.print-header { display: none; }
+
+/* ========== ANIMATIONS ========== */
+@keyframes fadeInUp {
+from { opacity: 0; transform: translateY(12px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+.flashcard {
+animation: fadeInUp 0.3s ease both;
+}
+
+.flashcard:nth-child(2) { animation-delay: 0.03s; }
+.flashcard:nth-child(3) { animation-delay: 0.06s; }
+.flashcard:nth-child(4) { animation-delay: 0.09s; }
+.flashcard:nth-child(5) { animation-delay: 0.12s; }
+.flashcard:nth-child(6) { animation-delay: 0.15s; }
+
+/* ========== FOOTER ========== */
+footer {
+text-align: center;
+padding: 24px;
+color: var(–ink-20);
+font-size: 12px;
+font-family: var(–font-mono);
+}
+</style>
+
 </head>
-<body class="bg-slate-100 min-h-screen font-sans text-slate-900">
+<body>
 
-    <div id="app" class="max-w-4xl mx-auto px-4 py-8 print-container">
-        <!-- Web Header (Hidden on Print) -->
-        <header class="mb-8 text-center no-print">
-            <h1 class="text-3xl font-black text-blue-900 mb-2 italic tracking-tight">五力自我評估問卷</h1>
-            <p class="text-slate-600 font-medium tracking-wide">根據孔毅老師「贏在扭轉力」體系設計</p>
-            <div class="mt-6 h-2 bg-slate-200 rounded-full overflow-hidden max-w-md mx-auto">
-                <div id="progress-bar" class="h-full bg-blue-600 transition-all duration-500" style="width: 0%"></div>
-            </div>
-        </header>
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">🃏</div>
+      <h1>Flash<span>Forge</span></h1>
+    </div>
+    <div class="header-tag">NotebookLM CSV → 閃卡 & PDF</div>
+  </div>
+</header>
 
-        <!-- Main Content Area -->
-        <div id="survey-content" class="bg-white rounded-3xl shadow-xl p-6 md:p-10 mb-8 min-h-[400px]">
-            <!-- Dynamic Content -->
-        </div>
-
-        <!-- Navigation Buttons (Hidden on Print) -->
-        <div id="nav-buttons" class="flex justify-between items-center no-print max-w-4xl mx-auto px-4">
-            <button id="prev-btn" class="px-6 py-2 rounded-xl font-bold text-slate-500 hover:bg-slate-200 transition hidden">上一步</button>
-            <span id="page-indicator" class="text-slate-400 font-black text-sm"></span>
-            <button id="next-btn" class="px-10 py-3 rounded-2xl bg-blue-700 text-white font-black hover:bg-blue-800 shadow-xl transition transform active:scale-95">下一階段</button>
-        </div>
+<main>
+  <!-- Upload -->
+  <div class="upload-section">
+    <div class="upload-zone" id="uploadZone">
+      <span class="upload-icon">📄</span>
+      <h2>拖放 CSV 檔案到此處</h2>
+      <p>或點擊此處選擇檔案 — 支援 NotebookLM 匯出嘅 CSV 格式</p>
+      <input type="file" id="fileInput" accept=".csv,.tsv,.txt">
     </div>
 
-    <script>
-        const surveyData = [
-            { id: 'envision', name: '眼力', english: 'Envision', title: '一、眼力 (Envision) —— 預見未來的能力', questions: ["1. 我能夠清晰地設定個人和職業目標", "2. 我經常反思自己的長期願景", "3. 我能夠看到未來的潛在機會", "4. 我在做決策時會考慮長期影響", "5. 我能夠根據市場趨勢調整計劃", "6. 我經常尋求新的學習機會", "7. 我能夠有效地預測行業變化", "8. 我會在工作中尋求創新", "9. 我能夠制定出實際可行的計劃", "10. 我能夠激勵他人朝著共同的願景前進", "11. 我對未來的計劃有清晰的藍圖", "12. 我能夠有效地分辨重要的資訊", "13. 我能夠從過去的經驗中學習並改進未來的行動", "14. 我會積極參與團隊的長期規劃", "15. 我能夠在工作中體現創造力", "16. 我相信思考的深度能影響結果", "17. 我能夠快速識別問題的根源", "18. 我會不斷更新自己的專業知識", "19. 我能夠保持開放的心態,迎接新觀點", "20. 我能夠清楚地表達我的願景"] },
-            { id: 'energize', name: '魅力', english: 'Energize', title: '二、魅力 (Energize) —— 發揮影響力的能力', questions: ["1. 我能夠激勵他入朝著共同的目標努力", "2. 我在團隊中經常充當鼓舞者的角色", "3. 我能夠輕鬆建立良好的人際關係", "4. 我會主動關心同事的需求和感受", "5. 我能夠在工作中創造積極的氛圍", "6. 我經常表達對他人努力的讚賞", "7. 我能夠有效地處理團隊中的衝突", "8. 我能夠激發團隊成員的潛能", "9. 我會主動分享自己的知識和經驗", "10. 我能夠在壓力下保持積極態度", "11. 我相信團隊合作的重要性", "12. 我經常尋求他人的意見和反饋", "13. 我能夠在團隊中建立信任", "14. 我會定期檢討團隊的表現", "15. 我能夠鼓勵團隊成員分享創新想法", "16. 我會主動尋找增強團隊士氣的方法", "17. 我能夠有效地傳達團隊的願景", "18. 我能夠帶動團隊迎接挑戰", "19. 我相信每個人都能為團隊貢獻力量", "20. 我能夠在工作中保持熱情和動力"] },
-            { id: 'execute', name: '動力', english: 'Execute', title: '三、動力 (Execute) —— 完成夢想的能力', questions: ["1. 我能夠有效地制定和執行計劃", "2. 我會在工作中保持高效率", "3. 我能夠按時完成任務", "4. 我會定期檢查自己的進度", "5. 我能夠在壓力下保持工作效率", "6. 我能夠準確地識別優先事項", "7. 我會主動尋求反饋以改進工作", "8. 我能夠靈活應對變化的情況", "9. 我經常反思自己的工作表現", "10. 我能夠有效地管理時間和資源", "11. 我能夠在團隊中發揮主動性", "12. 我會持續尋求提高工作效率的方法", "13. 我能夠克服工作中的挑戰", "14. 我會在工作中保持專注", "15. 我能夠按部就班地完成複雜任務", "16. 我能夠簡化工作流程以提高效率", "17. 我會將目標細分為可行步驟", "18. 我能夠在遇到困難時保持韌性", "19. 我會主動參與團隊的執行工作", "20. 我能夠在工作中保持持續的動力"] },
-            { id: 'edge', name: '魄力', english: 'Edge', title: '四、魄力 (Edge) —— 勇於下決定的能力', questions: ["1. 我在做決策時能夠考慮風險", "2. 我不怕面對挑戰和困難", "3. 我有能力在壓力下保持冷靜", "4. 我能夠快速適應變化的環境", "5. 我願意接受新任務,甚至在不熟悉的領域中", "6. 我對自己的決策有信心", "7. 我能夠勇敢地表達自己的意見", "8. 我在團隊中能夠發揮領導作用", "9. 我能夠積極面對失敗,並從中學習", "10. 我在面對困難時能夠保持積極態度", "11. 我會主動尋找解決問題的方法", "12. 我能夠在不確定的情況下做出決策", "13. 我對自己的能力有清晰的認識", "14. 我能夠激勵自己超越自身的限制", "15. 我在工作中能夠保持高效能", "16. 我願意承擔風險以達成目標", "17. 我能夠在逆境中找到機會", "18. 我相信自己的直覺並勇敢行動", "19. 我能夠在團隊中推動變革", "20. 我能夠有效地管理時間和資源"] },
-            { id: 'ethics', name: '德力', english: 'Ethics', title: '五、德力 (Ethics) —— 贏得信任的能力', questions: ["1. 我能夠堅持自己的道德原則", "2. 我在工作中始終如一地遵循誠信", "3. 我會主動承擔自己的錯誤", "4. 我尊重他人的隱私和權益", "5. 我會為自己的行為負責", "6. 我在決策時考慮社會責任", "7. 我能夠抵抗不道德的誘惑", "8. 我相信誠實是長期成功的基石", "9. 我會在團隊中提倡道德行為", "10. 我能夠面對困難而不妥協於道德", "11. 我經常反思自己的道德選擇", "12. 我願意為他人提供幫助,而不僅僅考慮自己的利益", "13. 我能夠在壓力下保持誠信", "14. 我相信誠信會帶來良好的商業信用", "15. 我能夠清楚地表達自己的價值觀", "16. 我在面對困難時,會選擇正確的道路", "17. 我會在工作中倡導透明度", "18. 我能夠平衡個人利益與他人利益", "19. 我認為誠信是職場成功的關鍵", "20. 我會主動尋求改善道德標準的方法"] }
-        ];
+```
+<div class="sample-section no-print">
+  <h4>💡 支援嘅 CSV 格式</h4>
+  <p>系統會自動偵測欄位名稱，以下係常見格式：</p>
+  <pre>Front,Back
+```
 
-        const reportConfig = {
-            levels: [
-                { range: [20, 59], name: '第一組：慣性沈睡期', focus: '需喚醒：打破舊習慣' },
-                { range: [60, 79], name: '第二組：起點依賴期', focus: '需轉型：從知識轉向本事' },
-                { range: [80, 99], name: '第三組：拐點突破期', focus: '需深化：從偶爾做到習慣做' },
-                { range: [100, 120], name: '第四組：扭轉卓越期', focus: '需影響：從獨善其身到兼善天下' }
-            ],
-            details: {
-                envision: [
-                    { diag: '【停止盲從】你習慣依賴標準答案或他人意見，容易人云亦云。你需要開始爭取「思考主導權」。', task: '每日提問：每天對接收到的一個資訊或新聞，問三次「為什麼？」，直到找出與別人不一樣的觀點。' },
-                    { diag: '【啟動左腦】你有知識，但思緒可能混亂或過於發散。你需要訓練「嚴謹思考」，將資訊轉化為邏輯。', task: '寫下來：每天下班前，用筆紙將今天最重要的一件事「寫下來」，理清它的前因後果。' },
-                    { diag: '【操練右腦】你邏輯清晰，但缺乏創新突破。你需要「脫框思維」與「抽象化」能力，找出關聯。', task: '畫圖表：針對一個工作難題，試著畫出一張「關係圖」或歸納出「兩個結論」，看見整體脈絡。' },
-                    { diag: '【預見未來】你已有洞察力，現在要訓練「直覺」。像頂尖運動員一樣，在行動前先「看見」結果。', task: '模擬未來：在做重大決策前，閉眼 3 分鐘，在腦中像放電影一樣預演整個過程與成功的畫面。' }
-                ],
-                energize: [
-                    { diag: '【情緒防守】你容易受環境影響，情緒起伏大。你需要建立緩衝區，避免被情緒綁架。', task: '暫停 10 秒：當感到生氣或焦慮時，強迫自己數到 10 再開口，或離開現場（走上心靈陽台）。' },
-                    { diag: '【有效溝通】你善於做事但較少關注人。你需要從「說服」轉向「傾聽」，建立信任。', task: '積極聆聽：每天找一位同事對話 5 分鐘，全程不看手機、不打斷，只專注聽懂他的感受。' },
-                    { diag: '【深度連結】你有良好人緣，現在要建立深層關係。透過「一對一」瞭解夥伴的內在需求。', task: '換位思考：在批評或拒絕別人前，先問自己：「如果我是他，聽到這句話會有什麼感覺？」' },
-                    { diag: '【激勵領袖】你是團隊的能量源。你需要用正向信念感染他人，幫助他人成功。', task: '每日讚賞：每天真誠地讚美一位夥伴的具體貢獻，成為他生命中的貴人。' }
-                ],
-                execute: [
-                    { diag: '【打破慣性】你可能有拖延習慣，想法多行動少。你需要克服起步的摩擦力。', task: '當下原則：挑選一件你最想逃避的小事（如回信、整理桌面），告訴自己「只做 5 分鐘」立刻開始。' },
-                    { diag: '【專注聚焦】你很勤奮但效率不高（瞎忙）。你需要學會「減法」，專注於高價值事務。', task: '簡單原則：列出待辦事項，刪掉 20% 不重要的雜事，只專注做完那件最重要的事。' },
-                    { diag: '【追求極致】你執行力強，但可能陷入瓶頸。你需要「先深後博」，把專業練到無可取代。', task: '精進 1%：檢視你的工作流程，找出一個小細節進行優化，讓今天比昨天好一點點。' },
-                    { diag: '【加乘效應】你已是高手，現在要追求複利效應。透過持續的微小積累創造巨大差異。', task: '堅持儀式：建立一個雷打不動的習慣（如每日覆盤），即使狀況不好也堅持執行，保持動能。' }
-                ],
-                edge: [
-                    { diag: '【克服恐懼】你傾向待在舒適圈，害怕改變。你需要練習「與恐懼共存」。', task: '微型冒險：做一件平常不敢做的小事（如主動舉手發言），告訴自己「失敗也沒關係」。' },
-                    { diag: '【承擔責任】你按部就班，但在風險面前會猶豫。你需要學習在資訊不足時做決定。', task: '果斷決定：對於生活中的小選擇（吃什麼），規定自己在 30 秒內做決定，不許猶豫。' },
-                    { diag: '【逆向思維】你能解決問題，但需要更強的應變力。當環境改變時，敢於推廣舊經驗。', task: '壞事轉好事：睡前回顧今天遇到的一個挫折，寫下：「這件事帶給我的好處或機會是什麼？」' },
-                    { diag: '【扭轉局勢】你是領袖，能在危機中看見轉機。你需要帶領團隊進行「典範轉移」。', task: '挑戰現狀：每週問自己一次：「如果我現在的成功模式失效了，我該怎麼辦？」並構思備案。' }
-                ],
-                ethics: [
-                    { diag: '【建立底線】你可能為了方便而妥協。你需要建立「誠信是生存底線」的觀念。', task: '堅守承諾：對自己許下一個微小的承諾，並絕對遵守它，不找任何藉口。' },
-                    { diag: '【誠實面對】你為人正直，但在犯錯時可能傾向掩飾。你需要展現真實。', task: '承認不足：當發現自己不懂或做錯時，坦誠地說「我不知道」或「對不起」，而不是辯解。' },
-                    { diag: '【利他思維】你有良好操守，現在要實踐「利他是最好的利己」。', task: '主動助人：每天做一件「分外之事」去幫助同事或家人，且不求回報。' },
-                    { diag: '【影響生命】你是值得信賴的榜樣。你需要用生命影響生命，建立誠信文化。', task: '傳遞價值：在會議中分享一個關於「誠信」或「價值觀」的故事，影響身邊的人。' }
-                ]
-            }
-        };
+什麼是光合作用？,植物利用陽光、水和二氧化碳製造養分的過程
+What is photosynthesis?,The process by which plants convert sunlight into energy</pre>
+<p>亦支援：<code>Question/Answer</code>、<code>Term/Definition</code>、<code>題目/答案</code>、<code>問題/解答</code> 等欄位名</p>
+<button class="btn btn-secondary" onclick="loadSampleData()">📋 載入示範資料試試</button>
+</div>
 
-        let currentPage = 0;
-        const responses = {};
+  </div>
 
-        const surveyContent = document.getElementById('survey-content');
-        const prevBtn = document.getElementById('prev-btn');
-        const nextBtn = document.getElementById('next-btn');
-        const pageIndicator = document.getElementById('page-indicator');
-        const progressBar = document.getElementById('progress-bar');
+  <!-- Column Mapping -->
 
-        function renderPage() {
-            if (currentPage < surveyData.length) {
-                const category = surveyData[currentPage];
-                let html = `
-                    <div class="mb-6 animate-fade-in no-print">
-                        <h2 class="text-2xl font-black text-blue-900">${category.title}</h2>
-                        <p class="text-sm text-slate-500 mt-1 italic uppercase tracking-wider">根據感受評分：6 (最高) - 1 (最低)</p>
-                    </div>
+  <div class="mapping-section" id="mappingSection">
+    <h3>🔗 欄位對應</h3>
+    <div class="mapping-row">
+      <div class="mapping-group">
+        <label>正面 (問題)</label>
+        <select id="mapFront"></select>
+      </div>
+      <div class="mapping-group">
+        <label>背面 (答案)</label>
+        <select id="mapBack"></select>
+      </div>
+      <div class="mapping-group">
+        <label>分類標籤 (選填)</label>
+        <select id="mapTag"></select>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="applyMapping()">✅ 確認並生成閃卡</button>
+  </div>
 
-                    <div class="sticky-header flex justify-between px-2 mb-4 no-print">
-                        <span class="text-xs font-black text-blue-700">6 非常同意</span>
-                        <span class="text-xs font-black text-slate-400">1 非常不同意</span>
-                    </div>
+  <!-- Toolbar -->
 
-                    <div class="space-y-6 animate-fade-in no-print">
-                `;
+  <div class="toolbar" id="toolbar">
+    <div class="toolbar-left">
+      <div class="layout-btns">
+        <button class="btn-layout active" data-cols="2" onclick="setLayout(2, this)">2 欄</button>
+        <button class="btn-layout" data-cols="3" onclick="setLayout(3, this)">3 欄</button>
+        <button class="btn-layout" data-cols="4" onclick="setLayout(4, this)">4 欄</button>
+        <button class="btn-layout" data-cols="list" onclick="setLayout('list', this)">列表</button>
+      </div>
+      <select class="card-size-select" id="fontSizeSelect" onchange="setFontSize(this.value)">
+        <option value="small">字體：小</option>
+        <option value="medium" selected>字體：中</option>
+        <option value="large">字體：大</option>
+      </select>
+    </div>
+    <div class="toolbar-right">
+      <button class="btn btn-secondary" onclick="toggleAnswers()">👁 顯示/隱藏答案</button>
+      <button class="btn btn-mint" onclick="window.print()">🖨 列印 / 儲存 PDF</button>
+    </div>
+  </div>
 
-                category.questions.forEach((q, idx) => {
-                    const qId = `${category.id}_${idx}`;
-                    const currentVal = responses[qId] || 0;
-                    
-                    html += `
-                        <div class="border-b border-slate-50 pb-6 px-2">
-                            <p class="text-lg text-slate-700 mb-4 font-medium leading-relaxed">${q}</p>
-                            <div class="flex flex-row-reverse gap-2 md:gap-4 justify-between">
-                                ${[1, 2, 3, 4, 5, 6].map(val => `
-                                    <div class="flex-1">
-                                        <input type="radio" name="${qId}" id="${qId}_${val}" value="${val}" class="hidden" 
-                                            ${currentVal == val ? 'checked' : ''} 
-                                            onchange="saveResponse('${qId}', ${val})">
-                                        <label for="${qId}_${val}" class="flex flex-col items-center justify-center w-full py-3 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-blue-400 text-slate-600 font-black transition-all">
-                                            ${val}
-                                        </label>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    `;
-                });
+  <!-- Stats -->
 
-                html += `</div>`;
-                surveyContent.innerHTML = html;
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                
-                prevBtn.classList.toggle('hidden', currentPage === 0);
-                nextBtn.textContent = (currentPage === surveyData.length - 1) ? '查看完整報告' : '下一階段';
-                pageIndicator.textContent = `階段 ${currentPage + 1} / ${surveyData.length}`;
-                progressBar.style.width = `${((currentPage) / surveyData.length) * 100}%`;
-            } else {
-                renderResult();
-            }
-        }
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-item">
+      <div class="stat-num" id="statTotal">0</div>
+      <div class="stat-label">張閃卡</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="statTags">0</div>
+      <div class="stat-label">個分類</div>
+    </div>
+  </div>
 
-        window.saveResponse = (id, val) => { responses[id] = val; };
+  <!-- Cards -->
 
-        function validateCurrentPage() {
-            const category = surveyData[currentPage];
-            for (let i = 0; i < category.questions.length; i++) {
-                if (!responses[`${category.id}_${i}`]) {
-                    showToast(`請完成第 ${i + 1} 題`);
-                    return false;
-                }
-            }
-            return true;
-        }
+  <div class="cards-container" id="cardsContainer">
+    <div class="print-header">
+      <h2 id="printTitle">FlashForge 閃卡</h2>
+      <p id="printMeta"></p>
+    </div>
+    <div class="cards-grid layout-2" id="cardsGrid"></div>
+  </div>
 
-        function getLevel(score) {
-            return reportConfig.levels.find(l => score >= l.range[0] && score <= l.range[1]);
-        }
+  <!-- Empty state -->
 
-        function getAdviceDetail(id, score) {
-            let idx = 0;
-            if (score >= 100) idx = 3;
-            else if (score >= 80) idx = 2;
-            else if (score >= 60) idx = 1;
-            return reportConfig.details[id][idx];
-        }
+  <div class="empty-state" id="emptyState">
+    <div class="icon">🃏</div>
+    <h3>上傳 CSV 開始製作閃卡</h3>
+    <p>將 NotebookLM 匯出嘅 CSV 拖放到上方，即可生成可打印嘅閃卡</p>
+  </div>
+</main>
 
-        function renderResult() {
-            const scores = surveyData.map(cat => {
-                let sum = 0;
-                for (let i = 0; i < cat.questions.length; i++) { sum += responses[`${cat.id}_${i}`] || 0; }
-                const level = getLevel(sum);
-                const advice = getAdviceDetail(cat.id, sum);
-                return { id: cat.id, label: cat.name, english: cat.english, value: sum, level, advice };
-            });
+<footer>
+  FlashForge &mdash; Built for learning 📚
+</footer>
 
-            const sorted = [...scores].sort((a, b) => a.value - b.value);
-            const weakest = sorted[0];
-            const strongest = sorted[scores.length - 1];
+<script>
+// ========== STATE ==========
+let csvData = [];
+let csvHeaders = [];
+let cards = [];
+let answersVisible = true;
+let currentLayout = 2;
 
-            let html = `
-                <div class="animate-fade-in print-p-0">
-                    <!-- PDF 專用頁眉 -->
-                    <div class="print-header">
-                        <div class="flex justify-between items-end border-b-2 border-blue-900 pb-2 mb-4">
-                            <h2 class="text-2xl font-black text-blue-900 uppercase">五力自我評估深度診斷報告</h2>
-                            <span class="text-slate-400 text-xs font-bold uppercase tracking-widest">PERSONAL ASSESSMENT REPORT</span>
-                        </div>
-                    </div>
+// ========== UPLOAD ==========
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
 
-                    <!-- Web 頁眉與打印按鈕 -->
-                    <div class="flex flex-col md:flex-row justify-between items-start mb-8 no-print border-b-2 border-blue-900 pb-6">
-                        <div>
-                            <h2 class="text-4xl font-black text-blue-900 tracking-tighter">診斷分析完畢</h2>
-                            <p class="text-slate-500 font-bold mt-1 uppercase tracking-widest text-sm">Turning 5 Forces Analysis</p>
-                        </div>
-                        <div class="mt-6 md:mt-0">
-                            <button onclick="handlePrint()" class="flex items-center px-10 py-5 bg-blue-700 text-white rounded-2xl font-black hover:bg-blue-800 shadow-2xl transition transform active:scale-95">
-                                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                                打印 / 導出 PDF 報告
-                            </button>
-                        </div>
-                    </div>
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  uploadZone.classList.add('dragover');
+});
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', (e) => {
+  if (e.target.files.length) handleFile(e.target.files[0]);
+});
 
-                    <!-- 得分概覽 (第一頁) -->
-                    <div class="print-card bg-slate-50 p-8 rounded-3xl border border-slate-200 mb-10">
-                        <h3 class="text-xl font-black text-blue-900 mb-6 border-b border-blue-200 pb-2 uppercase tracking-widest">核心實力得分概覽</h3>
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-                            <div class="space-y-5">
-                                ${scores.map(s => `
-                                    <div class="space-y-1">
-                                        <div class="flex justify-between items-end">
-                                            <span class="text-lg font-black text-slate-800">${s.label} (${s.english})</span>
-                                            <span class="text-xl font-black text-blue-700">${s.value} <span class="text-slate-300 text-xs tracking-tighter">/ 120</span></span>
-                                        </div>
-                                        <div class="flex items-center gap-4">
-                                            <div class="flex-1 bg-slate-200 h-3 rounded-full overflow-hidden">
-                                                <div class="bg-blue-600 h-full" style="width: ${(s.value / 120) * 100}%"></div>
-                                            </div>
-                                            <span class="text-[10px] font-black text-blue-800 uppercase w-24 text-right leading-none">${s.level.name.split('：')[1]}</span>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                            <div class="flex justify-center">
-                                <svg viewBox="0 0 100 100" class="w-full max-w-[280px] overflow-visible">
-                                    <circle cx="50" cy="50" r="40" fill="none" stroke="#e2e8f0" stroke-width="0.5" stroke-dasharray="2" />
-                                    <circle cx="50" cy="50" r="20" fill="none" stroke="#e2e8f0" stroke-width="0.5" stroke-dasharray="2" />
-                                    ${scores.map((s, i) => {
-                                        const a = (i * 2 * Math.PI) / 5 - Math.PI/2;
-                                        const x = 50 + 40 * Math.cos(a);
-                                        const y = 50 + 40 * Math.sin(a);
-                                        const lx = 50 + 52 * Math.cos(a);
-                                        const ly = 50 + 52 * Math.sin(a);
-                                        return `<line x1="50" y1="50" x2="${x}" y2="${y}" stroke="#cbd5e1" stroke-width="0.5" /><text x="${lx}" y="${ly}" text-anchor="middle" class="text-[5px] font-black fill-slate-700">${s.label}</text>`;
-                                    }).join('')}
-                                    <polygon points="${scores.map((s, i) => {
-                                        const a = (i * 2 * Math.PI) / 5 - Math.PI/2;
-                                        const r = (s.value / 120) * 40;
-                                        return `${50 + r * Math.cos(a)},${50 + r * Math.sin(a)}`;
-                                    }).join(' ')}" fill="rgba(29, 78, 216, 0.2)" stroke="#1d4ed8" stroke-width="1.5" />
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
+function handleFile(file) {
+  if (!file.name.match(/\.(csv|tsv|txt)$/i)) {
+    alert('請上傳 CSV、TSV 或 TXT 檔案');
+    return;
+  }
 
-                    <!-- 瓶頸與優勢 (關鍵診斷) -->
-                    <div class="print-card grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-                        <div class="p-8 border-l-[10px] border-red-600 bg-red-50 rounded-r-3xl">
-                            <h4 class="font-black text-red-800 text-lg mb-2 uppercase tracking-tighter">🚨 瓶頸分析 (最短木板)</h4>
-                            <p class="text-slate-900 font-black text-xl mb-1">${weakest.label}：${weakest.value} 分</p>
-                            <p class="text-slate-600 text-sm leading-relaxed font-medium">這是您目前的發展限制。根據木桶原理，應優先針對此力進行觀念更新與操練。</p>
-                        </div>
-                        <div class="p-8 border-l-[10px] border-green-600 bg-green-50 rounded-r-3xl">
-                            <h4 class="font-black text-green-800 text-lg mb-2 uppercase tracking-tighter">🏆 優勢分析 (天賦所在)</h4>
-                            <p class="text-slate-900 font-black text-xl mb-1">${strongest.label}：${strongest.value} 分</p>
-                            <p class="text-slate-600 text-sm leading-relaxed font-medium">這是您的核心競爭力。應利用「區分原則」繼續強化，使其成為不可替代的品牌。</p>
-                        </div>
-                    </div>
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    encoding: 'UTF-8',
+    complete: (results) => {
+      if (results.data.length === 0) {
+        alert('檔案無資料，請檢查格式');
+        return;
+      }
+      csvData = results.data;
+      csvHeaders = results.meta.fields || [];
 
-                    <!-- 強制換頁 (進入詳細解析) -->
-                    <div class="print-break-before"></div>
+      // Update upload zone
+      uploadZone.classList.add('has-file');
+      uploadZone.innerHTML = `
+        <div class="file-info">
+          <span style="font-size:24px">✅</span>
+          <span class="file-name">${file.name}</span>
+          <span class="file-stats">${csvData.length} 行 · ${csvHeaders.length} 欄</span>
+          <button class="btn-remove" onclick="resetAll(event)">✕ 移除</button>
+        </div>
+      `;
 
-                    <h3 class="text-2xl font-black text-blue-900 mb-8 border-b-4 border-blue-900 inline-block uppercase tracking-tighter">五力逐項深度診斷與每日行動方針</h3>
-                    
-                    <div class="space-y-8">
-                        ${scores.map(s => `
-                            <div class="print-card bg-white p-8 rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-                                <div class="flex flex-col md:flex-row justify-between md:items-center mb-6 gap-3 border-b border-slate-100 pb-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 bg-blue-900 text-white rounded-xl flex items-center justify-center font-black text-lg">${s.label.charAt(0)}</div>
-                                        <div>
-                                            <h4 class="text-2xl font-black text-slate-900 leading-none">${s.label}</h4>
-                                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${s.english}</span>
-                                        </div>
-                                    </div>
-                                    <div class="flex flex-col md:items-end">
-                                        <span class="px-5 py-1.5 bg-blue-900 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">${s.level.name}</span>
-                                        <p class="text-[9px] text-blue-600 font-black mt-1 uppercase tracking-tighter italic">${s.level.focus}</p>
-                                    </div>
-                                </div>
-                                
-                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200">
-                                        <div class="flex items-center gap-2 mb-3">
-                                            <div class="w-1 h-4 bg-slate-800 rounded"></div>
-                                            <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest">診斷提議 / Diagnosis</span>
-                                        </div>
-                                        <p class="text-slate-700 text-sm leading-relaxed font-medium">${s.advice.diag}</p>
-                                    </div>
-                                    <div class="bg-blue-50 p-5 rounded-2xl border border-blue-100">
-                                        <div class="flex items-center gap-2 mb-3">
-                                            <div class="w-1 h-4 bg-blue-600 rounded"></div>
-                                            <span class="text-[10px] font-black text-blue-700 uppercase tracking-widest">每日一事 / Daily Task</span>
-                                        </div>
-                                        <p class="text-blue-900 text-sm leading-relaxed font-black">${s.advice.task}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
+      showMapping();
+    },
+    error: (err) => {
+      alert('解析失敗: ' + err.message);
+    }
+  });
+}
 
-                    <div class="mt-16 pt-10 border-t-2 border-slate-100 text-center no-print">
-                        <p class="text-slate-400 text-sm font-bold tracking-wide italic">"診斷" 只是起點，"操練" 才是突破。持續精進，贏在扭轉點。</p>
-                        <button onclick="window.location.reload()" class="mt-8 px-12 py-4 border-4 border-blue-900 text-blue-900 rounded-2xl hover:bg-blue-900 hover:text-white transition font-black text-lg shadow-xl">重新進行深度評估</button>
-                    </div>
+// ========== COLUMN MAPPING ==========
+const frontKeywords = ['front', 'question', 'q', 'term', 'word', 'prompt', '問題', '題目', '正面', '詞語', '字詞', '前面', '概念'];
+const backKeywords = ['back', 'answer', 'a', 'definition', 'response', 'explanation', '答案', '解答', '背面', '定義', '釋義', '解釋', '後面'];
+const tagKeywords = ['tag', 'category', 'topic', 'chapter', 'type', 'group', '分類', '標籤', '主題', '章節', '類別'];
 
-                    <!-- PDF 頁腳 -->
-                    <div class="print-header mt-10 text-center border-t border-slate-100 pt-4">
-                        <p class="text-[8px] text-slate-300 uppercase tracking-[0.5em]">報告由五力自我評估系統自動生成 • 參考《贏在扭轉力》孔毅著</p>
-                    </div>
-                </div>
-            `;
+function autoDetectColumn(keywords) {
+  for (const kw of keywords) {
+    const found = csvHeaders.find(h => h.toLowerCase().trim() === kw);
+    if (found) return found;
+  }
+  for (const kw of keywords) {
+    const found = csvHeaders.find(h => h.toLowerCase().includes(kw));
+    if (found) return found;
+  }
+  return null;
+}
 
-            surveyContent.innerHTML = html;
-            prevBtn.classList.add('hidden');
-            nextBtn.classList.add('hidden');
-            pageIndicator.textContent = "分析報告已生成";
-            progressBar.style.width = "100%";
-        }
+function showMapping() {
+  const section = document.getElementById('mappingSection');
+  section.classList.add('active');
 
-        function handlePrint() {
-            // 給予短暫延遲讓瀏覽器渲染完成
-            setTimeout(() => { window.print(); }, 200);
-        }
+  const frontSel = document.getElementById('mapFront');
+  const backSel = document.getElementById('mapBack');
+  const tagSel = document.getElementById('mapTag');
 
-        function showToast(msg) {
-            const toast = document.createElement('div');
-            toast.className = "fixed top-10 left-1/2 -translate-x-1/2 bg-red-600 text-white px-10 py-5 rounded-3xl shadow-2xl z-50 animate-bounce font-black text-lg";
-            toast.textContent = msg;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2500);
-        }
+  const optionsHtml = csvHeaders.map(h => `<option value="${h}">${h}</option>`).join('');
+  frontSel.innerHTML = optionsHtml;
+  backSel.innerHTML = optionsHtml;
+  tagSel.innerHTML = `<option value="">— 無 —</option>` + optionsHtml;
 
-        nextBtn.addEventListener('click', () => {
-            if (validateCurrentPage()) {
-                currentPage++;
-                renderPage();
-            }
-        });
+  // Auto-detect
+  const detectedFront = autoDetectColumn(frontKeywords);
+  const detectedBack = autoDetectColumn(backKeywords);
+  const detectedTag = autoDetectColumn(tagKeywords);
 
-        prevBtn.addEventListener('click', () => {
-            if (currentPage > 0) {
-                currentPage--;
-                renderPage();
-            }
-        });
+  if (detectedFront) frontSel.value = detectedFront;
+  else if (csvHeaders.length >= 1) frontSel.value = csvHeaders[0];
 
-        renderPage();
-    </script>
+  if (detectedBack) backSel.value = detectedBack;
+  else if (csvHeaders.length >= 2) backSel.value = csvHeaders[1];
+
+  if (detectedTag) tagSel.value = detectedTag;
+
+  // If clearly only 2 useful columns, auto-generate
+  if (csvHeaders.length <= 3 && detectedFront && detectedBack) {
+    applyMapping();
+  }
+}
+
+function applyMapping() {
+  const frontCol = document.getElementById('mapFront').value;
+  const backCol = document.getElementById('mapBack').value;
+  const tagCol = document.getElementById('mapTag').value;
+
+  if (frontCol === backCol) {
+    alert('正面同背面唔可以用同一欄');
+    return;
+  }
+
+  cards = csvData
+    .filter(row => (row[frontCol] || '').trim() || (row[backCol] || '').trim())
+    .map((row, i) => ({
+      num: i + 1,
+      front: (row[frontCol] || '').trim(),
+      back: (row[backCol] || '').trim(),
+      tag: tagCol ? (row[tagCol] || '').trim() : ''
+    }));
+
+  if (cards.length === 0) {
+    alert('搵唔到有效資料，請檢查欄位對應');
+    return;
+  }
+
+  renderCards();
+  document.getElementById('mappingSection').classList.remove('active');
+}
+
+// ========== RENDER CARDS ==========
+function renderCards() {
+  const grid = document.getElementById('cardsGrid');
+  const tags = [...new Set(cards.map(c => c.tag).filter(Boolean))];
+
+  grid.innerHTML = cards.map(c => `
+    <div class="flashcard">
+      <div class="flashcard-num">#${c.num}</div>
+      <div class="flashcard-front">
+        <div class="content">${escHtml(c.front)}</div>
+      </div>
+      <div class="flashcard-back answer-area">
+        <div class="content">${escHtml(c.back)}</div>
+        ${c.tag ? `<div class="flashcard-tag"><span>${escHtml(c.tag)}</span></div>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  // Update UI
+  document.getElementById('cardsContainer').classList.add('active');
+  document.getElementById('toolbar').classList.add('active');
+  document.getElementById('statsBar').classList.add('active');
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('statTotal').textContent = cards.length;
+  document.getElementById('statTags').textContent = tags.length;
+  document.getElementById('printMeta').textContent = `共 ${cards.length} 張閃卡 · ${new Date().toLocaleDateString('zh-HK')}`;
+
+  answersVisible = true;
+}
+
+function escHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+// ========== LAYOUT ==========
+function setLayout(cols, btn) {
+  const grid = document.getElementById('cardsGrid');
+  grid.className = 'cards-grid';
+
+  if (cols === 'list') {
+    grid.classList.add('layout-list');
+  } else {
+    grid.classList.add(`layout-${cols}`);
+  }
+
+  currentLayout = cols;
+  document.querySelectorAll('.btn-layout').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function setFontSize(size) {
+  const grid = document.getElementById('cardsGrid');
+  const map = { small: '12px', medium: '14px', large: '16px' };
+  const mapBack = { small: '11px', medium: '13px', large: '15px' };
+  grid.querySelectorAll('.flashcard-front .content').forEach(el => el.style.fontSize = map[size]);
+  grid.querySelectorAll('.flashcard-back .content').forEach(el => el.style.fontSize = mapBack[size]);
+}
+
+function toggleAnswers() {
+  answersVisible = !answersVisible;
+  document.querySelectorAll('.answer-area').forEach(el => {
+    el.style.display = answersVisible ? '' : 'none';
+  });
+}
+
+// ========== SAMPLE DATA ==========
+function loadSampleData() {
+  const sampleCSV = `Front,Back,Tag
+什麼是光合作用？,植物利用陽光、水和二氧化碳，製造葡萄糖和氧氣的過程。,生物
+What is the water cycle?,The continuous movement of water between Earth's surface and atmosphere through evaporation condensation and precipitation.,Science
+地球自轉一圈需要多久？,約 24 小時（一天）。,天文
+What are the three states of matter?,Solid liquid and gas. Matter can change between states by adding or removing heat.,Science
+什麼是食物鏈？,生物之間透過食物形成的能量傳遞關係，由生產者到消費者再到分解者。,生物
+How do magnets work?,Magnets have a north and south pole. Opposite poles attract and same poles repel each other.,Physics
+香港的官方語言是什麼？,中文和英文。,常識
+What is gravity?,A force that pulls objects toward each other. Earth's gravity keeps us on the ground.,Physics`;
+
+  const parsed = Papa.parse(sampleCSV, { header: true, skipEmptyLines: true });
+  csvData = parsed.data;
+  csvHeaders = parsed.meta.fields;
+
+  uploadZone.classList.add('has-file');
+  uploadZone.innerHTML = `
+    <div class="file-info">
+      <span style="font-size:24px">📋</span>
+      <span class="file-name">示範資料</span>
+      <span class="file-stats">${csvData.length} 行 · ${csvHeaders.length} 欄</span>
+      <button class="btn-remove" onclick="resetAll(event)">✕ 移除</button>
+    </div>
+  `;
+
+  showMapping();
+}
+
+// ========== RESET ==========
+function resetAll(e) {
+  if (e) e.stopPropagation();
+  csvData = [];
+  csvHeaders = [];
+  cards = [];
+  fileInput.value = '';
+
+  uploadZone.classList.remove('has-file');
+  uploadZone.innerHTML = `
+    <span class="upload-icon">📄</span>
+    <h2>拖放 CSV 檔案到此處</h2>
+    <p>或點擊此處選擇檔案 — 支援 NotebookLM 匯出嘅 CSV 格式</p>
+    <input type="file" id="fileInput" accept=".csv,.tsv,.txt">
+  `;
+
+  // Re-bind file input
+  document.getElementById('fileInput').addEventListener('change', (e) => {
+    if (e.target.files.length) handleFile(e.target.files[0]);
+  });
+
+  document.getElementById('mappingSection').classList.remove('active');
+  document.getElementById('toolbar').classList.remove('active');
+  document.getElementById('statsBar').classList.remove('active');
+  document.getElementById('cardsContainer').classList.remove('active');
+  document.getElementById('cardsGrid').innerHTML = '';
+  document.getElementById('emptyState').style.display = '';
+}
+</script>
+
 </body>
 </html>
-
